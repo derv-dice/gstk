@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ProgressBar UI</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: lightgrey;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .progressbar-container {
+            flex-basis: 30%;
+            padding: 0 10px 0 10px;
+            margin: 10px 0 0 0;
+        }
+
+        .progressbar-container-empty {
+            flex-basis: 30%;
+            padding: 0 10px 0 10px;
+            margin: 10px 0 0 0;
+        }
+
+        .terminal-container {
+            flex-basis: 50%;
+            max-height: 450px;
+            min-height: 450px;
+            overflow: auto;
+            background-color: #333;
+            padding: 10px 10px 10px 10px;
+            margin: 10px;
+            border-radius: 5px;
+            color: gainsboro;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+            box-shadow: 4px 4px 8px 0 rgba(34, 60, 80, 0.2);
+        }
+
+        .terminal-container-empty {
+            flex-basis: 25%;
+            font-family: 'Courier New', monospace;
+            font-size: 10pt;
+        }
+
+        .connection-status-ok {
+            color: green;
+        }
+
+        .connection-status-bad {
+            color: red;
+        }
+
+        .checkbox-google {
+            display: inline-block;
+            height: 28px;
+            line-height: 28px;
+            margin-right: 10px;
+            position: relative;
+            vertical-align: middle;
+            /*font-size: 14px;*/
+            user-select: none;
+        }
+
+        .checkbox-google .checkbox-google-switch {
+            display: inline-block;
+            width: 36px;
+            height: 14px;
+            border-radius: 20px;
+            position: relative;
+            top: 6px;
+            vertical-align: top;
+            background: #9f9f9f;
+            transition: .2s;
+        }
+
+        .checkbox-google .checkbox-google-switch:before {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            position: absolute;
+            top: -3px;
+            left: -1px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+            transition: .15s;
+        }
+
+        .checkbox-google input[type=checkbox] {
+            display: block;
+            width: 0;
+            height: 0;
+            position: absolute;
+            z-index: -1;
+            opacity: 0;
+        }
+
+        .checkbox-google input[type=checkbox]:checked + .checkbox-google-switch {
+            background: #9ABEF7;
+        }
+
+        .checkbox-google input[type=checkbox]:checked + .checkbox-google-switch:before {
+            /*background: #1a73e8;*/
+            transform: translateX(18px);
+        }
+
+        /* Hover */
+        .checkbox-google input[type="checkbox"]:not(:disabled) + .checkbox-google-switch {
+            cursor: pointer;
+            border-color: rgba(0, 0, 0, .3);
+        }
+
+        /* Active/Focus */
+        .checkbox-google input[type="checkbox"]:not(:disabled):active + .checkbox-google-switch:before,
+        .checkbox-google input[type="checkbox"]:not(:disabled):focus + .checkbox-google-switch:before {
+            animation: checkbox-active-on 0.5s forwards linear;
+        }
+
+        @keyframes checkbox-active-on {
+            0% {
+                box-shadow: 0 0 0 0 rgba(212, 212, 212, 0);
+            }
+            99% {
+                box-shadow: 0 0 0 10px rgba(212, 212, 212, 0.5);
+            }
+        }
+
+        .checkbox-google input[type="checkbox"]:not(:disabled):checked:active + .checkbox-google-switch:before,
+        .checkbox-google input[type="checkbox"]:not(:disabled):checked:focus + .checkbox-google-switch:before {
+            animation: checkbox-active-off 0.5s forwards linear;
+        }
+
+        @keyframes checkbox-active-off {
+            0% {
+                box-shadow: 0 0 0 0 rgba(154, 190, 247, 0);
+            }
+            99% {
+                box-shadow: 0 0 0 10px rgba(154, 190, 247, 0.5);
+            }
+        }
+
+        /* Disabled */
+        .checkbox-google input[type=checkbox]:disabled + .checkbox-google-switch {
+            filter: grayscale(60%);
+            border-color: rgba(0, 0, 0, .1);
+        }
+
+        .checkbox-google input[type=checkbox]:disabled + .checkbox-google-switch:before {
+            background: #eee;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="progressbarContainer" class="progressbar-container"></div>
+    <div id="terminalContainer" class="terminal-container">
+        <div>Web Progressbar v1.0.0</div>
+    </div>
+</div>
+<div class="container">
+    <div class="progressbar-container-empty"></div>
+    <div class="terminal-container-empty terminal-switch">
+        <label class="checkbox-google">
+            <input id="autoRollDownCheckbox" type="checkbox" checked>
+            <span class="checkbox-google-switch"></span>
+            Auto roll down
+        </label>
+    </div>
+    <div id="connectionStatus" class="terminal-container-empty">
+        <div class="connection-status-bad">Connection closed</div>
+    </div>
+</div>
+</body>
+
+<script>
+    // const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    let windowIsLoaded = false
+    window.onload = function () {
+        console.log('window onload')
+        fetch('http://localhost{{.addr}}/events')
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                console.log('fetched')
+                renderEventLog(data);
+            });
+    }
+
+    let ws = new WebSocket("ws://localhost{{.addr}}/updates");
+
+    ws.onmessage = function (e) {
+        if (!windowIsLoaded) {
+            return
+        }
+
+        let data = {progressBars: Array, eventLog: Array, eventLogUpdates: Array} = JSON.parse(e.data)
+        renderProgressbar(data)
+        renderEventLogUpdates(data)
+    }
+
+    ws.onopen = function (e) {
+        console.log('ws connected')
+        document.getElementById('connectionStatus').innerHTML = `<div class="connection-status-ok">Connected</div>`
+
+    }
+
+    ws.onclose = function (e) {
+        console.log('ws disconnected')
+        document.getElementById('connectionStatus').innerHTML = `<div class="connection-status-bad">Connection closed</div>`
+    }
+
+    function renderProgressbar(json_obj) {
+        console.log('renderProgressbar')
+
+        let node = document.getElementById('progressbarContainer');
+        node.innerHTML = "";
+        json_obj.progressBars.forEach(elem => {
+            let newNode = document.createElement('span');
+            newNode.innerHTML = `
+                <div style="background-color: whitesmoke; margin: 0 0 10px 0; padding: 5px; border-radius: 5px;
+                            box-shadow: 4px 4px 8px 0 rgba(34, 60, 80, 0.2);">
+                        <div>${elem.Name}</div>
+                        <div>
+                            <progress style="width:100%" max="${elem.Max}" value="${elem.Val}"></progress>
+                        </div>
+                        <div>> count: ${elem.Val}/${elem.Max}</div>
+                </div>`
+            node.appendChild(newNode);
+        })
+    }
+
+    function renderEventLogUpdates(json_obj) {
+        console.log('renderEventLogUpdates')
+
+        let node = document.getElementById('terminalContainer')
+
+        if (json_obj.eventLogUpdates !== [] && json_obj.eventLogUpdates !== undefined) {
+            json_obj.eventLogUpdates.forEach(element => {
+                let newNode = document.createElement('span');
+                newNode.innerHTML = `<div>> ${element}</div>`
+                node.appendChild(newNode);
+            })
+
+            if (document.querySelector('#autoRollDownCheckbox').checked) {
+                node.scrollTop = node.scrollHeight;
+            }
+        }
+    }
+
+    function renderEventLog(json_obj) {
+        console.log('renderEventLog')
+        let node = document.getElementById('terminalContainer')
+
+        if (json_obj.eventLog !== [] && json_obj.eventLog !== undefined) {
+            json_obj.eventLog.forEach(element => {
+                let newNode = document.createElement('span');
+                newNode.innerHTML = `<div>> ${element}</div>`
+                node.appendChild(newNode);
+            })
+
+            if (document.querySelector('#autoRollDownCheckbox').checked) {
+                node.scrollTop = node.scrollHeight;
+            }
+        }
+
+        console.log('windowIsLoaded = true')
+        windowIsLoaded = true
+    }
+</script>
+</html>
