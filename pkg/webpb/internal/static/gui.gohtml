@@ -181,9 +181,8 @@
 </body>
 
 <script>
-    // const sleep = ms => new Promise(r => setTimeout(r, ms));
-
     let windowIsLoaded = false
+
     window.onload = function () {
         console.log('window onload')
         fetch('http://localhost{{.addr}}/events')
@@ -209,19 +208,14 @@
     }
 
     ws.onopen = function (e) {
-        console.log('ws connected')
         document.getElementById('connectionStatus').innerHTML = `<div class="connection-status-ok">Connected</div>`
-
     }
 
     ws.onclose = function (e) {
-        console.log('ws disconnected')
         document.getElementById('connectionStatus').innerHTML = `<div class="connection-status-bad">Connection closed</div>`
     }
 
     function renderProgressbar(json_obj) {
-        console.log('renderProgressbar')
-
         let node = document.getElementById('progressbarContainer');
         node.innerHTML = "";
         json_obj.progressBars.forEach(elem => {
@@ -240,8 +234,6 @@
     }
 
     function renderEventLogUpdates(json_obj) {
-        console.log('renderEventLogUpdates')
-
         let node = document.getElementById('terminalContainer')
 
         if (json_obj.eventLogUpdates !== [] && json_obj.eventLogUpdates !== undefined) {
@@ -258,7 +250,6 @@
     }
 
     function renderEventLog(json_obj) {
-        console.log('renderEventLog')
         let node = document.getElementById('terminalContainer')
 
         if (json_obj.eventLog !== [] && json_obj.eventLog !== undefined) {
@@ -273,7 +264,6 @@
             }
         }
 
-        console.log('windowIsLoaded = true')
         windowIsLoaded = true
     }
 </script>
