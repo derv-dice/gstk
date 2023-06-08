@@ -12,4 +12,6 @@
 - [ ] `pkg/mongodb` - Работа с БД MongoDB
 - [ ] `pkg/fdb` - Работа с БД FoundationDB
 - [x] `pkg/zerologx` - Обвязка для работы с [zerolog](https://github.com/rs/zerolog)
+- [x] `pkg/interval` - Функции для работы с периодами и интервалами. В основном, нужно для разбиения sql запросов по
+  времени
 - [ ] ...
