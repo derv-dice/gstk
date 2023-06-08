@@ -190,7 +190,7 @@
                 return response.json();
             })
             .then((data) => {
-                console.log('fetched')
+                renderProgressbar(data)
                 renderEventLog(data);
             });
     }

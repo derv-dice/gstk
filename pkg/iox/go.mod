@@ -1,4 +1,4 @@
-module github.com/derv-dice/gstk/pkg/iof
+module github.com/derv-dice/gstk/pkg/iox
 
 go 1.20
 

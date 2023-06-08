@@ -103,14 +103,8 @@ func (b *WebProgressBar) AddNewProgressBar(name string, val, max int) (bar model
 	return
 }
 
-func (b *WebProgressBar) GetProgressBarByName(name string) (bar model.ProgressBar, err error) {
-	if b.progressBars[name] == nil {
-		err = fmt.Errorf("ProgressBar with name '%s' not exists", name)
-		return
-	}
-
-	bar = b.progressBars[name]
-	return
+func (b *WebProgressBar) GetProgressBarByName(name string) (bar model.ProgressBar) {
+	return b.progressBars[name]
 }
 
 func (b *WebProgressBar) AddNewEvent(event string) {
@@ -132,6 +126,7 @@ func (b *WebProgressBar) isInited() bool {
 func (b *WebProgressBar) events(w http.ResponseWriter, _ *http.Request) {
 	view := new(View)
 	view.EventLog = b.eventLog.Events()
+	view.ProgressBars = b.progressBarsView()
 	data, _ := json.Marshal(view)
 	_, _ = w.Write(data)
 }
@@ -183,15 +178,21 @@ func (b *WebProgressBar) sendJSON(conn *websocket.Conn) (err error) {
 		return
 	}
 
+	view.ProgressBars = b.progressBarsView()
+
+	return conn.WriteJSON(view)
+}
+
+func (b *WebProgressBar) progressBarsView() (pbs []*ProgressBarView) {
 	for i := range b.progressBarsOrder {
-		view.ProgressBars = append(view.ProgressBars, &ProgressBarView{
+		pbs = append(pbs, &ProgressBarView{
 			Name: b.progressBarsOrder[i],
 			Val:  b.progressBars[b.progressBarsOrder[i]].Val(),
 			Max:  b.progressBars[b.progressBarsOrder[i]].Len(),
 		})
 	}
 
-	return conn.WriteJSON(view)
+	return
 }
 
 func (b *WebProgressBar) ui() []byte {
