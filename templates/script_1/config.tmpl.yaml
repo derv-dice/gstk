@@ -1,2 +1,4 @@
 go_count: 0
-db_dsn: ""
+db_first_name: ""
+db_first_dsn: ""
+input_filename: ""
