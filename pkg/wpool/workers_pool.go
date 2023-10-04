@@ -60,8 +60,8 @@ func (w *WPool) Put(tasks ...Task) (err error) {
 	}
 
 	for i := range tasks {
-		w.in <- tasks[i]
 		w.wg.Add(1)
+		w.in <- tasks[i]
 	}
 
 	return
